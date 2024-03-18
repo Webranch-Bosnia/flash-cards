@@ -1,9 +1,10 @@
-// import { useQuery } from "@tanstack/react-query";
-// import { useCookies } from "react-cookie";
+import { useQuery } from "@tanstack/react-query";
+import { useCookies } from "react-cookie";
 import { useState } from "react";
 import bg from "../assets/bg.svg";
+import { getFlashCards } from "../api";
 
-const MAX_NUMBER = 31;
+const MAX_NUMBER = 30;
 
 interface ICQuestion {
   question: IQuestion;
@@ -20,9 +21,9 @@ const Question = ({ question, change, index }: ICQuestion) => {
   };
   return (
     <div className="flex-1 space-y-4">
-      <h1 className="text-xl">{question.questionText}</h1>
+      <h1 className="text-xl">{question.question}</h1>
       <div className="flex flex-col items-start justify-start w-full space-y-2">
-        {question.options.map((v, i) => {
+        {question.answerOptions.map((v, i) => {
           return (
             <div
               className={`px-4 py-2 w-full border rounded-md hover:border-red-new transition-all cursor-pointer ${
@@ -46,7 +47,7 @@ const Question = ({ question, change, index }: ICQuestion) => {
         <p className="text-red-700">
           Oops, you answered that incorrectly, here is the reason:
           <br />
-          {question.reason}
+          {question.correctAnswerReason}
         </p>
       )}
 
@@ -74,10 +75,10 @@ interface ICCard {
 }
 const Card = ({ card }: ICCard) => {
   return (
-    <div
-      className="flex-1"
-      dangerouslySetInnerHTML={{ __html: card.text }}
-    ></div>
+    <div className="flex-1">
+      <p className="text-xl mb-2">{card.heading}</p>
+      <div dangerouslySetInnerHTML={{ __html: card.content }}></div>
+    </div>
   );
 };
 
@@ -107,27 +108,40 @@ const Buttons = ({ change, index }: CButtons) => {
 };
 
 export default function FlashCards() {
-  //   const [fcId] = useCookies(["fcId"]);
-  //   const query = useQuery({ queryKey: ["flashCards"], queryFn: getFlashCards });
-  const [flashCards] = useState<IFlashCard[]>(
-    Array(25).fill({
-      text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt mattis eros. Morbi porttitor libero mi, eu malesuada velit vestibulum porta. Curabitur non ultrices ligula. Praesent augue dolor, egestas at commodo ac, semper in eros. Aliquam erat volutpat. Donec dolor augue, rhoncus ac risus vitae, finibus scelerisque nisl. Cras sollicitudin volutpat arcu nec consectetur. Sed sagittis, leo eu faucibus tempus, neque ipsum dictum lectus, sit amet scelerisque tellus ex eget urna. Aenean interdum imperdiet justo condimentum molestie. Mauris commodo non tellus quis maximus. Vivamus ut rhoncus ipsum. Phasellus viverra neque id ultricies sodales. Donec turpis dolor, eleifend nec congue sit amet, commodo vel sapien. Phasellus suscipit a leo nec suscipit. Morbi purus ex, vehicula ut justo in, vehicula iaculis arcu.",
-    })
-  );
+  const [cookies] = useCookies(["fcId"]);
 
-  const [questions] = useState<IQuestion[]>(
-    Array(5).fill({
-      questionText: "LKJljkasdfja jajlksdf jkajskldf ljkasdljk f",
-      options: ["1", "2", "3", "4"],
-      correctAnswer: 0,
-      reason: "asdf ajklsdl faksjldf klj jklasdf jlk",
-    })
-  );
+  const query = useQuery({
+    queryKey: ["flashCards"],
+    queryFn: () => getFlashCards(cookies.fcId),
+  });
+  console.log(query.data);
 
   const [index, setIndex] = useState<number>(1);
+  // const [_, setCurrent] = useState(0);
+  // const [valueToSubtract, setValueToSubtract] = useState(0);
 
   const change = (i: number) => {
-    setIndex((prev) => prev + i);
+    // if (i > 0)
+    //   setCurrent((prev) => {
+    //     if (prev + 1 === 5) {
+    //       setValueToSubtract((prev) => prev + 1);
+    //       return 0;
+    //     }
+    //     return prev + 1;
+    //   });
+
+    // if (i < 0)
+    //   setCurrent((prev) => {
+    //     if (prev - 1 === 0) {
+    //       setValueToSubtract((prev) => (prev !== 0 ? prev - 1 : 0));
+    //       return 0;
+    //     }
+    //     return prev - 1;
+    //   });
+
+    setIndex((prev) => {
+      return prev + i;
+    });
   };
   return (
     <div
@@ -137,16 +151,18 @@ export default function FlashCards() {
       className="min-h-screen w-full flex justify-center items-center bg-white/90 bg-cover bg-center"
     >
       <div className="max-w-2xl bg-white min-h-96 border w-full rounded-md flex flex-col  px-6 py-4 ">
-        {index % 5 === 0 && (
+        {index % 6 === 0 && query.isFetched && query.data && (
           <Question
-            question={questions[index / 5 - 1]}
+            question={query.data[index - 1]}
             change={change}
             index={index}
           />
         )}
-        {index % 5 !== 0 && <Card card={flashCards[index - 1]} />}
+        {index % 6 !== 0 && query.isFetched && query.data && (
+          <Card card={query.data[index - 1]} />
+        )}
 
-        {index % 5 !== 0 && <Buttons change={change} index={index} />}
+        {index % 6 !== 0 && <Buttons change={change} index={index} />}
       </div>
     </div>
   );

@@ -1,10 +1,18 @@
 interface IFlashCard {
-  text: string;
+  heading: string;
+  content: string;
 }
 
 interface IQuestion {
-  questionText: string;
-  options: string[];
+  question: string;
+  answerOptions: string[];
   correctAnswer: number;
-  reason: string;
+  correctAnswerReason: string;
+}
+
+interface IResponse {
+  cards: IFlashCard[];
+  currentNumber: number;
+  id: string;
+  quizzes: IQuestion[];
 }
